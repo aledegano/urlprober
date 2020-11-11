@@ -1,3 +1,5 @@
+![CI](https://github.com/aledegano/dyndns-updater/workflows/.github/workflows/ci.yml/badge.svg)
+
 # dyn-dns updater
 
 Keep your dynamic DNS up to date from your home-deployed Kubernetes cluster.

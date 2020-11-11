@@ -30,8 +30,8 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
+          platforms: linux/amd64,linux/arm/v7,linux/arm64
           push: true
           tags: |
-            ghcr.io/user/app:latest
-            ghcr.io/user/app:0.0.1
+            ghcr.io/aledegano/dyndnsupdater:latest
+            ghcr.io/aledegano/dyndnsupdater:0.0.1

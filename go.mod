@@ -1,4 +1,4 @@
-module dyndnsupdater
+module urlprober
 
 go 1.15
 

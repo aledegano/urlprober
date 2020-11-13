@@ -2,6 +2,7 @@ FROM golang:1.15
 
 WORKDIR /urlprober
 COPY . /urlprober
+RUN go test -v
 RUN CGO_ENABLED=0 go build
 
 FROM alpine:3.12.1

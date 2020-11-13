@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -26,8 +26,7 @@ func (c *config) init() error {
 	viper.BindEnv("url")
 	url := viper.Get("url")
 	if url == nil {
-		log.Fatal().
-			Msg("The enviornment variable DYNDNS_URL must be set.")
+		return errors.New("The enviornment variable DYNDNS_URL must be set")
 	}
 	c.url = url.(string)
 
@@ -35,11 +34,11 @@ func (c *config) init() error {
 	viper.BindEnv("interval")
 	interval := viper.Get("interval")
 	if interval == nil {
-		log.Fatal().Msg("The environment variable DYNDNS_INTERVAL must be set.")
+		return errors.New("The environment variable DYNDNS_INTERVAL must be set")
 	}
 	tick, err := strconv.Atoi(interval.(string))
 	if err != nil {
-		log.Fatal().Msgf("Cannot convert interval: %s to integer.", interval.(string))
+		return fmt.Errorf("Cannot convert interval: %s to integer", interval.(string))
 	}
 	c.tick = time.Duration(tick) * time.Second
 
@@ -57,13 +56,16 @@ func main() {
 	}()
 
 	if err := run(ctx, c); err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err)
-		os.Exit(1)
+		log.Fatal().Str("component", "init").Err(err).Send()
 	}
 }
 
 func run(ctx context.Context, c *config) error {
-	c.init()
+	log.Info().Str("component", "run").Msg("Starting prober.")
+	err := c.init()
+	if err != nil {
+		return err
+	}
 
 	for {
 		select {

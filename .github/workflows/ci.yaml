@@ -33,5 +33,5 @@ jobs:
           platforms: linux/amd64,linux/arm/v7,linux/arm64
           push: true
           tags: |
-            ghcr.io/aledegano/dyndnsupdater:latest
-            ghcr.io/aledegano/dyndnsupdater:0.0.1
+            ghcr.io/aledegano/urlprober:latest
+            ghcr.io/aledegano/urlprober:0.0.1

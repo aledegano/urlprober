@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -19,22 +19,35 @@ type config struct {
 	tick time.Duration
 }
 
+func errorEnvNotSet(prefix string, env string) error {
+	return fmt.Errorf(
+		"The enviornment variable %s_%s must be set",
+		strings.ToUpper(prefix),
+		strings.ToUpper(env),
+	)
+}
+
 func (c *config) init() error {
-	viper.SetEnvPrefix("dyndns")
+	var (
+		envPrefix   = "urlprober"
+		envURL      = "url"
+		envInterval = "interval"
+	)
+	viper.SetEnvPrefix(envPrefix)
 
 	// Set the URL to probe from environment
-	viper.BindEnv("url")
-	url := viper.Get("url")
+	viper.BindEnv(envURL)
+	url := viper.Get(envURL)
 	if url == nil {
-		return errors.New("The enviornment variable DYNDNS_URL must be set")
+		return errorEnvNotSet(envPrefix, envURL)
 	}
 	c.url = url.(string)
 
 	// Set the probing interval, in seconds, from the environment
-	viper.BindEnv("interval")
-	interval := viper.Get("interval")
+	viper.BindEnv(envInterval)
+	interval := viper.Get(envInterval)
 	if interval == nil {
-		return errors.New("The environment variable DYNDNS_INTERVAL must be set")
+		return errorEnvNotSet(envPrefix, envInterval)
 	}
 	tick, err := strconv.Atoi(interval.(string))
 	if err != nil {

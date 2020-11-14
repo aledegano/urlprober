@@ -16,7 +16,7 @@ func TestMissingUrl(t *testing.T) {
 }
 
 func TestMissingInterval(t *testing.T) {
-	os.Setenv("DYNDNS_URL", "https://example.com")
+	os.Setenv("URLPROBER_URL", "https://example.com")
 	c := &config{}
 	err := c.init()
 	if err == nil {
@@ -25,7 +25,7 @@ func TestMissingInterval(t *testing.T) {
 }
 
 func TestWrongInterval(t *testing.T) {
-	os.Setenv("DYNDNS_INTERVAL", "not_a_number")
+	os.Setenv("URLPROBER_INTERVAL", "not_a_number")
 	c := &config{}
 	err := c.init()
 	if err == nil {
@@ -34,8 +34,8 @@ func TestWrongInterval(t *testing.T) {
 }
 
 func TestCorrectInit(t *testing.T) {
-	os.Setenv("DYNDNS_URL", "https://example.com")
-	os.Setenv("DYNDNS_INTERVAL", "42")
+	os.Setenv("URLPROBER_URL", "https://example.com")
+	os.Setenv("URLPROBER_INTERVAL", "42")
 	c := &config{}
 	err := c.init()
 	if err != nil {

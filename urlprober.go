@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -15,8 +17,9 @@ import (
 )
 
 type config struct {
-	url  string
-	tick time.Duration
+	url   string
+	query string
+	tick  time.Duration
 }
 
 func errorEnvNotSet(prefix string, env string) error {
@@ -32,16 +35,17 @@ func (c *config) init() error {
 		envPrefix   = "urlprober"
 		envURL      = "url"
 		envInterval = "interval"
+		envQuery    = "query"
 	)
 	viper.SetEnvPrefix(envPrefix)
 
 	// Set the URL to probe from environment
 	viper.BindEnv(envURL)
-	url := viper.Get(envURL)
-	if url == nil {
+	targetURL := viper.Get(envURL)
+	if targetURL == nil {
 		return errorEnvNotSet(envPrefix, envURL)
 	}
-	c.url = url.(string)
+	c.url = targetURL.(string)
 
 	// Set the probing interval, in seconds, from the environment
 	viper.BindEnv(envInterval)
@@ -54,6 +58,19 @@ func (c *config) init() error {
 		return fmt.Errorf("Cannot convert interval: %s to integer", interval.(string))
 	}
 	c.tick = time.Duration(tick) * time.Second
+
+	// Set the optional query paramter from the environment
+	viper.BindEnv(envQuery)
+	query := viper.Get(envQuery)
+	if query == nil {
+		log.Info().Msg("Optional query not set.")
+	} else {
+		c.query = query.(string)
+		_, err := url.Parse(c.url + c.query)
+		if err != nil {
+			return errors.New("The provided query forms an invalid URL when appended to the provided target URL")
+		}
+	}
 
 	return nil
 }
@@ -86,7 +103,7 @@ func run(ctx context.Context, c *config) error {
 			return nil
 		case <-time.Tick(c.tick):
 			log.Info().Str("url", c.url).Msg("Querying.")
-			resp, err := http.Get(c.url)
+			resp, err := http.Get(c.url + c.query)
 			if err != nil {
 				log.Warn().Err(err).Str("url", c.url).Msg("The query failed.")
 			}

@@ -17,9 +17,10 @@ import (
 )
 
 type config struct {
-	query string
-	tick  time.Duration
-	url   string
+	query          string
+	requiredStatus map[int]bool
+	tick           time.Duration
+	url            string
 }
 
 func errorEnvNotSet(prefix string, env string) error {
@@ -32,10 +33,11 @@ func errorEnvNotSet(prefix string, env string) error {
 
 func (c *config) init() error {
 	var (
-		envInterval = "interval"
-		envPrefix   = "urlprober"
-		envQuery    = "query"
-		envURL      = "url"
+		envInterval       = "interval"
+		envPrefix         = "urlprober"
+		envQuery          = "query"
+		envRequiredStatus = "required_status"
+		envURL            = "url"
 	)
 	viper.SetEnvPrefix(envPrefix)
 
@@ -70,6 +72,27 @@ func (c *config) init() error {
 		if err != nil {
 			return errors.New("The provided query forms an invalid URL when appended to the provided target URL")
 		}
+	}
+
+	// Set the optional required status parameter from environment
+	viper.BindEnv(envRequiredStatus)
+	requiredStatus := viper.Get(envRequiredStatus)
+	c.requiredStatus = make(map[int]bool)
+	if requiredStatus == nil {
+		c.requiredStatus[200] = true //Set the default to 200: OK
+	} else {
+		tokens := strings.Split(requiredStatus.(string), ",")
+		for _, t := range tokens {
+			status, err := strconv.Atoi(t)
+			if err != nil {
+				return fmt.Errorf("Cannot convert status code: %s to integer", t)
+			}
+			if http.StatusText(status) == "" {
+				return fmt.Errorf("The provided status code: %d does not correspond to a valid HTTP status code", status)
+			}
+			c.requiredStatus[status] = true
+		}
+		log.Info().Msgf("The status codes: %s will be considered successful responses", tokens)
 	}
 
 	return nil
@@ -108,11 +131,18 @@ func run(ctx context.Context, c *config) error {
 				log.Warn().Err(err).Str("url", c.url).Msg("The query failed.")
 			}
 			defer resp.Body.Close()
+			if !c.requiredStatus[resp.StatusCode] {
+				log.Warn().Str("url", c.url).Msgf("The returned status code: %d is not among those requested", resp.StatusCode)
+				continue
+			}
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				log.Warn().Err(err).Str("url", c.url).Msg("Failed to decode response of query")
 			}
-			log.Info().Str("url", c.url).Msgf("Successful query response: %s", body)
+			log.Info().
+				Str("url", c.url).
+				Str("status", strconv.Itoa(resp.StatusCode)).
+				Msgf("Successful query response: %s", body)
 		}
 	}
 }

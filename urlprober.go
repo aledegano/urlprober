@@ -17,9 +17,9 @@ import (
 )
 
 type config struct {
-	url   string
 	query string
 	tick  time.Duration
+	url   string
 }
 
 func errorEnvNotSet(prefix string, env string) error {
@@ -32,10 +32,10 @@ func errorEnvNotSet(prefix string, env string) error {
 
 func (c *config) init() error {
 	var (
-		envPrefix   = "urlprober"
-		envURL      = "url"
 		envInterval = "interval"
+		envPrefix   = "urlprober"
 		envQuery    = "query"
+		envURL      = "url"
 	)
 	viper.SetEnvPrefix(envPrefix)
 
